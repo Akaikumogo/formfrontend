@@ -25,6 +25,7 @@ function FieldInput({ field }: { field: FormField }) {
   const options = Array.isArray(field.config?.options)
     ? (field.config!.options as string[]).map((o) => ({ label: o, value: o }))
     : [];
+  const picker = String(field.config?.picker || 'date');
 
   switch (field.type) {
     case 'LONG_TEXT':
@@ -34,11 +35,44 @@ function FieldInput({ field }: { field: FormField }) {
     case 'EMAIL':
       return <Input type="email" placeholder={field.placeholder || ''} />;
     case 'PHONE':
-      return <Input placeholder={field.placeholder || '+998...'} />;
+      return (
+        <Input
+          placeholder={field.placeholder || '+998901234567'}
+          maxLength={13}
+          onInput={(e) => {
+            const el = e.target as HTMLInputElement;
+            let d = el.value.replace(/\D/g, '');
+            if (d.startsWith('998')) d = d.slice(0, 12);
+            else d = d.slice(0, 9);
+            if (d.length === 9) el.value = `+998${d}`;
+            else if (d.length === 12) el.value = `+${d}`;
+            else if (d.length > 0 && !el.value.startsWith('+998')) {
+              el.value = `+998${d}`;
+            }
+          }}
+        />
+      );
     case 'DATE':
-      return <DatePicker className="w-full" />;
+      if (picker === 'month') {
+        return <DatePicker className="w-full" picker="month" format="MM.YYYY" />;
+      }
+      if (picker === 'year') {
+        return <DatePicker className="w-full" picker="year" format="YYYY" />;
+      }
+      return (
+        <DatePicker
+          className="w-full"
+          format={String(field.config?.format || 'DD.MM.YYYY')}
+        />
+      );
     case 'DATETIME':
-      return <DatePicker showTime className="w-full" />;
+      return (
+        <DatePicker
+          showTime
+          className="w-full"
+          format={String(field.config?.format || 'DD.MM.YYYY HH:mm')}
+        />
+      );
     case 'SINGLE_SELECT':
       return <Select options={options} placeholder="Tanlang" />;
     case 'MULTI_SELECT':
@@ -50,6 +84,39 @@ function FieldInput({ field }: { field: FormField }) {
     default:
       return <Input placeholder={field.placeholder || ''} />;
   }
+}
+
+function fieldRules(field: FormField) {
+  const rules: any[] = [];
+  if (field.required) {
+    rules.push({ required: true, message: 'Majburiy maydon' });
+  }
+  if (field.type === 'PHONE') {
+    rules.push({
+      validator: async (_: unknown, value: string) => {
+        if (!value) return;
+        const digits = String(value).replace(/\D/g, '');
+        const ok =
+          digits.length === 12 && digits.startsWith('998')
+            ? true
+            : digits.length === 9;
+        if (!ok) {
+          throw new Error("O'zbekiston raqami: +998XXXXXXXXX");
+        }
+      },
+    });
+  }
+  if (field.type === 'EMAIL') {
+    rules.push({ type: 'email', message: 'Email noto‘g‘ri' });
+  }
+  const pattern = field.config?.pattern;
+  if (typeof pattern === 'string' && pattern && field.type !== 'PHONE') {
+    rules.push({
+      pattern: new RegExp(pattern),
+      message: String(field.config?.patternMessage || 'Format noto‘g‘ri'),
+    });
+  }
+  return rules;
 }
 
 export default function PublicFormPage() {
@@ -79,6 +146,13 @@ export default function PublicFormPage() {
           value = '';
         } else {
           value = String(value);
+        }
+        if (f.type === 'PHONE' && value) {
+          const digits = String(value).replace(/\D/g, '');
+          if (digits.length === 9) value = `+998${digits}`;
+          else if (digits.length === 12 && digits.startsWith('998')) {
+            value = `+${digits}`;
+          }
         }
         return { fieldId: f.id, value: String(value) };
       });
@@ -176,11 +250,7 @@ export default function PublicFormPage() {
                 valuePropName={
                   field.type === 'YES_NO' ? 'checked' : 'value'
                 }
-                rules={
-                  field.required
-                    ? [{ required: true, message: 'Majburiy maydon' }]
-                    : undefined
-                }
+                rules={fieldRules(field)}
               >
                 <FieldInput field={field} />
               </Form.Item>

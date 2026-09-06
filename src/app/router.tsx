@@ -26,6 +26,7 @@ import {
   GroupsPage,
   GroupDetailPage,
 } from '../features/groups/GroupsPages';
+import FormOffersPage from '../features/forms/FormOffersPage';
 import { useAuth } from '../hooks/useAuth';
 import type { UserRole } from '../types';
 
@@ -95,6 +96,7 @@ export default function AppRouter() {
           <Route path="forms/:id" element={<FormDetailPage />} />
           <Route path="forms/:id/edit" element={<FormBuilderPage />} />
           <Route path="forms/:id/responses" element={<FormDetailPage />} />
+          <Route path="offers" element={<FormOffersPage />} />
           <Route path="students" element={<StudentsPage />} />
           <Route path="groups" element={<GroupsPage />} />
           <Route path="groups/:id" element={<GroupDetailPage />} />

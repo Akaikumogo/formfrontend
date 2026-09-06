@@ -35,4 +35,22 @@ export const formsApi = {
     api.get(`/public/forms/${publicId}`).then((r) => r.data),
   overview: (id: string) =>
     api.get(`/forms/${id}/overview`).then((r) => r.data),
+  offerToGroup: (id: string, data: { groupId: string; note?: string }) =>
+    api.post(`/forms/${id}/offers`, data).then((r) => r.data),
+  listOffers: (params?: { status?: string }) =>
+    api.get('/form-offers', { params }).then((r) => r.data),
+  acceptOffer: (id: string) =>
+    api.post(`/form-offers/${id}/accept`).then((r) => r.data),
+  rejectOffer: (id: string) =>
+    api.post(`/form-offers/${id}/reject`).then((r) => r.data),
+};
+
+export const notificationsApi = {
+  list: () => api.get('/notifications/inbox').then((r) => r.data),
+  unreadCount: () =>
+    api.get<{ count: number }>('/notifications/inbox/unread-count').then((r) => r.data),
+  markRead: (id: string) =>
+    api.patch(`/notifications/inbox/${id}/read`).then((r) => r.data),
+  markAllRead: () =>
+    api.post('/notifications/inbox/read-all').then((r) => r.data),
 };

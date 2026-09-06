@@ -13,11 +13,13 @@ import {
   PlusOutlined,
   CheckCircleOutlined,
   SendOutlined,
+  InboxOutlined,
 } from '@ant-design/icons';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import OnboardingModal from '../features/auth/OnboardingModal';
+import NotificationsBell from '../features/notifications/NotificationsBell';
 import type { UserRole } from '../types';
 
 const { Sider, Header, Content } = Layout;
@@ -40,6 +42,7 @@ function getNav(role: UserRole) {
     return [
       { key: '/teacher/dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
       { key: '/teacher/forms', icon: <FormOutlined />, label: 'Formalarim' },
+      { key: '/teacher/offers', icon: <InboxOutlined />, label: 'Takliflar' },
       { key: '/teacher/forms/create', icon: <PlusOutlined />, label: 'Yangi forma' },
       { key: '/teacher/groups', icon: <GroupOutlined />, label: 'Guruhlarim' },
       { key: '/teacher/students', icon: <TeamOutlined />, label: 'Talabalar' },
@@ -202,6 +205,7 @@ export default function AppLayout() {
             </Typography.Text>
           </div>
           <div className="flex items-center gap-3">
+            <NotificationsBell />
             <Typography.Text className="!text-xs uppercase tracking-wide text-slate-500">
               {user ? roleLabel(user.role) : ''}
             </Typography.Text>

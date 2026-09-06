@@ -32,6 +32,7 @@ export default function FormDetailPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedResponse, setSelectedResponse] = useState<string | null>(null);
   const [assignOpen, setAssignOpen] = useState(false);
+  const [offerOpen, setOfferOpen] = useState(false);
   const [groupId, setGroupId] = useState<string>();
 
   const { data: overview, isLoading } = useQuery({
@@ -126,6 +127,16 @@ export default function FormDetailPage() {
     onError: (e) => message.error(getErrorMessage(e)),
   });
 
+  const offer = useMutation({
+    mutationFn: () => formsApi.offerToGroup(id, { groupId: groupId! }),
+    onSuccess: () => {
+      message.success('Taklif guruh rahbariga yuborildi');
+      setOfferOpen(false);
+      qc.invalidateQueries({ queryKey: ['form', id] });
+    },
+    onError: (e) => message.error(getErrorMessage(e)),
+  });
+
   const exportFile = async (format: 'csv' | 'xlsx') => {
     try {
       const token = localStorage.getItem('accessToken');
@@ -160,6 +171,13 @@ export default function FormDetailPage() {
               Tahrirlash
             </Button>
             <Button onClick={() => setAssignOpen(true)}>Biriktirish</Button>
+            <Button
+              type="primary"
+              ghost
+              onClick={() => setOfferOpen(true)}
+            >
+              Guruhga taklif
+            </Button>
             <Button
               onClick={() => {
                 navigator.clipboard.writeText(publicUrl);
@@ -261,6 +279,29 @@ export default function FormDetailPage() {
         confirmLoading={assign.isPending}
         okText="Biriktirish"
       >
+        <Select
+          className="w-full"
+          placeholder="Guruhni tanlang"
+          value={groupId}
+          onChange={setGroupId}
+          options={(groups || []).map((g: { id: string; name: string; code: string }) => ({
+            value: g.id,
+            label: `${g.code} — ${g.name}`,
+          }))}
+        />
+      </Modal>
+
+      <Modal
+        title="Guruh rahbariga taklif yuborish"
+        open={offerOpen}
+        onCancel={() => setOfferOpen(false)}
+        onOk={() => offer.mutate()}
+        confirmLoading={offer.isPending}
+        okText="Yuborish"
+      >
+        <p className="text-sm text-slate-500 mb-2">
+          O‘qituvchi qabul qilgach, forma talabalarga bildirishnoma bilan yetadi.
+        </p>
         <Select
           className="w-full"
           placeholder="Guruhni tanlang"

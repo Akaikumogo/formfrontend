@@ -114,6 +114,12 @@ export default function FormBuilderPage() {
         options: Array.isArray(selected.config?.options)
           ? (selected.config!.options as string[]).join('\n')
           : '',
+        pattern: selected.config?.pattern || '',
+        patternMessage: selected.config?.patternMessage || '',
+        picker: selected.config?.picker || 'date',
+        format: selected.config?.format || '',
+        minLength: selected.config?.minLength,
+        maxLength: selected.config?.maxLength,
       });
     }
   }, [selected, fieldForm]);
@@ -184,6 +190,13 @@ export default function FormBuilderPage() {
         .map((s: string) => s.trim())
         .filter(Boolean);
     }
+    if (values.pattern) config.pattern = values.pattern;
+    else delete config.pattern;
+    if (values.patternMessage) config.patternMessage = values.patternMessage;
+    if (values.picker) config.picker = values.picker;
+    if (values.format) config.format = values.format;
+    if (values.minLength != null) config.minLength = Number(values.minLength);
+    if (values.maxLength != null) config.maxLength = Number(values.maxLength);
     try {
       const updated = await formsApi.updateField(formId, selected.id, {
         label: values.label,
@@ -291,7 +304,7 @@ export default function FormBuilderPage() {
             Maydon qo‘shish
           </div>
           <Space wrap className="mb-4">
-            {fieldTypes.slice(0, 6).map((t) => (
+            {fieldTypes.map((t) => (
               <Button key={t.value} size="small" onClick={() => addField(t.value)}>
                 + {t.label}
               </Button>
@@ -376,6 +389,45 @@ export default function FormBuilderPage() {
                 <Form.Item name="options" label="Variantlar (har qator)">
                   <Input.TextArea rows={4} />
                 </Form.Item>
+              )}
+              {selected.type === 'PHONE' && (
+                <>
+                  <Form.Item name="pattern" label="Pattern (regex)" initialValue={'^\\+998\\d{9}$'}>
+                    <Input placeholder="^\+998\d{9}$" />
+                  </Form.Item>
+                  <Form.Item name="patternMessage" label="Xato xabari">
+                    <Input placeholder="O'zbekiston telefoni: +998XXXXXXXXX" />
+                  </Form.Item>
+                </>
+              )}
+              {(selected.type === 'DATE' || selected.type === 'DATETIME') && (
+                <>
+                  <Form.Item name="picker" label="DatePicker turi">
+                    <Select
+                      options={[
+                        { value: 'date', label: 'Kun' },
+                        { value: 'month', label: 'Oy' },
+                        { value: 'year', label: 'Yil' },
+                      ]}
+                    />
+                  </Form.Item>
+                  <Form.Item name="format" label="Format">
+                    <Input placeholder="DD.MM.YYYY" />
+                  </Form.Item>
+                </>
+              )}
+              {(selected.type === 'SHORT_TEXT' || selected.type === 'LONG_TEXT') && (
+                <>
+                  <Form.Item name="pattern" label="Shart (regex)">
+                    <Input placeholder="ixtiyoriy pattern" />
+                  </Form.Item>
+                  <Form.Item name="minLength" label="Min uzunlik">
+                    <InputNumber className="w-full" min={0} />
+                  </Form.Item>
+                  <Form.Item name="maxLength" label="Max uzunlik">
+                    <InputNumber className="w-full" min={1} />
+                  </Form.Item>
+                </>
               )}
               <Space>
                 <Button type="primary" onClick={saveField}>
