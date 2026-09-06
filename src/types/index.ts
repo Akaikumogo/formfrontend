@@ -47,6 +47,8 @@ export interface StudentProfile {
   groupId?: string | null;
   group?: Group | null;
   address?: string | null;
+  loginPassword?: string | null;
+  user?: { id: string; email: string; status?: string };
 }
 
 export interface User {

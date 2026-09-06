@@ -9,6 +9,7 @@ export const studentsApi = {
     api.post<User>('/students', data).then((r) => r.data),
   update: (id: string, data: Record<string, unknown>) =>
     api.patch<User>(`/students/${id}`, data).then((r) => r.data),
+  remove: (id: string) => api.delete(`/students/${id}`).then((r) => r.data),
 };
 
 export const teachersApi = {
@@ -18,6 +19,7 @@ export const teachersApi = {
     api.post<User>('/teachers', data).then((r) => r.data),
   update: (id: string, data: Record<string, unknown>) =>
     api.patch<User>(`/teachers/${id}`, data).then((r) => r.data),
+  remove: (id: string) => api.delete(`/teachers/${id}`).then((r) => r.data),
 };
 
 export const groupsApi = {

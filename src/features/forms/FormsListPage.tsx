@@ -3,6 +3,7 @@ import {
   Button,
   Dropdown,
   Input,
+  Modal,
   Select,
   Table,
   Tag,
@@ -202,6 +203,28 @@ export default function FormsListPage() {
                         label: 'Nusxa',
                         onClick: () =>
                           mutate.mutate({ id: r.id, action: 'duplicate' }),
+                      },
+                      {
+                        key: 'delete',
+                        label: 'O‘chirish',
+                        danger: true,
+                        onClick: () => {
+                          Modal.confirm({
+                            title: 'Formani o‘chirish?',
+                            content: 'Bu amalni qaytarib bo‘lmaydi.',
+                            okText: 'O‘chirish',
+                            okButtonProps: { danger: true },
+                            onOk: async () => {
+                              try {
+                                await formsApi.remove(r.id);
+                                message.success('O‘chirildi');
+                                qc.invalidateQueries({ queryKey: ['forms'] });
+                              } catch (e) {
+                                message.error(getErrorMessage(e));
+                              }
+                            },
+                          });
+                        },
                       },
                     ],
                   }}

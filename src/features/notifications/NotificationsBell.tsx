@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Badge, Button, Dropdown, Empty, List, Typography } from 'antd';
+import { Badge, Button, Dropdown, Empty, Typography } from 'antd';
 import { BellOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { notificationsApi } from '../../api/forms';

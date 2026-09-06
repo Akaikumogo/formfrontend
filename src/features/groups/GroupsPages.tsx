@@ -4,10 +4,12 @@ import {
   Form,
   Input,
   Modal,
+  Popconfirm,
   Space,
   Table,
   Tabs,
   Tag,
+  Typography,
   Upload,
   message,
 } from 'antd';
@@ -155,6 +157,7 @@ export function GroupDetailPage() {
   const qc = useQueryClient();
   const [studentOpen, setStudentOpen] = useState(false);
   const [csvOpen, setCsvOpen] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<any>(null);
   const [form] = Form.useForm();
   const [csvText, setCsvText] = useState('');
 
@@ -182,6 +185,32 @@ export function GroupDetailPage() {
     onError: (e) => message.error(getErrorMessage(e)),
   });
 
+  const updateStudent = useMutation({
+    mutationFn: ({
+      userId,
+      values,
+    }: {
+      userId: string;
+      values: Record<string, unknown>;
+    }) => studentsApi.update(userId, values),
+    onSuccess: () => {
+      message.success('Yangilandi');
+      setEditingStudent(null);
+      form.resetFields();
+      qc.invalidateQueries({ queryKey: ['group', id] });
+    },
+    onError: (e) => message.error(getErrorMessage(e)),
+  });
+
+  const removeStudent = useMutation({
+    mutationFn: (userId: string) => studentsApi.remove(userId),
+    onSuccess: () => {
+      message.success('O‘chirildi');
+      qc.invalidateQueries({ queryKey: ['group', id] });
+    },
+    onError: (e) => message.error(getErrorMessage(e)),
+  });
+
   const importCsv = useMutation({
     mutationFn: () =>
       apiImport(id, csvText),
@@ -194,6 +223,18 @@ export function GroupDetailPage() {
     },
     onError: (e) => message.error(getErrorMessage(e)),
   });
+
+  const openEditStudent = (r: any) => {
+    setEditingStudent(r);
+    form.setFieldsValue({
+      firstName: r.firstName,
+      lastName: r.lastName,
+      email: r.user?.email,
+      studentNumber: r.studentNumber,
+      phone: r.phone,
+      password: r.loginPassword || undefined,
+    });
+  };
 
   return (
     <div>
@@ -230,6 +271,7 @@ export function GroupDetailPage() {
                   rowKey="id"
                   loading={isLoading}
                   dataSource={data?.students || []}
+                  scroll={{ x: 1000 }}
                   columns={[
                     {
                       title: 'F.I.Sh',
@@ -238,10 +280,47 @@ export function GroupDetailPage() {
                     },
                     { title: 'Raqam', dataIndex: 'studentNumber' },
                     {
-                      title: 'Email',
-                      render: (_: unknown, r: any) => r.user?.email || '—',
+                      title: 'Login',
+                      render: (_: unknown, r: any) =>
+                        r.user?.email ? (
+                          <Typography.Text copyable={{ text: r.user.email }}>
+                            {r.user.email}
+                          </Typography.Text>
+                        ) : (
+                          '—'
+                        ),
+                    },
+                    {
+                      title: 'Parol',
+                      render: (_: unknown, r: any) =>
+                        r.loginPassword ? (
+                          <Typography.Text copyable={{ text: r.loginPassword }} code>
+                            {r.loginPassword}
+                          </Typography.Text>
+                        ) : (
+                          '—'
+                        ),
                     },
                     { title: 'Telefon', dataIndex: 'phone' },
+                    {
+                      title: 'Amallar',
+                      width: 180,
+                      render: (_: unknown, r: any) => (
+                        <Space>
+                          <Button size="small" onClick={() => openEditStudent(r)}>
+                            Tahrirlash
+                          </Button>
+                          <Popconfirm
+                            title="Talabani o‘chirish?"
+                            onConfirm={() => removeStudent.mutate(r.userId || r.user?.id)}
+                          >
+                            <Button size="small" danger>
+                              O‘chirish
+                            </Button>
+                          </Popconfirm>
+                        </Space>
+                      ),
+                    },
                   ]}
                 />
               </div>
@@ -285,22 +364,47 @@ export function GroupDetailPage() {
       />
 
       <Modal
-        title="Talaba qo‘shish"
-        open={studentOpen}
-        onCancel={() => setStudentOpen(false)}
+        title={editingStudent ? 'Talabani tahrirlash' : 'Talaba qo‘shish'}
+        open={studentOpen || !!editingStudent}
+        onCancel={() => {
+          setStudentOpen(false);
+          setEditingStudent(null);
+          form.resetFields();
+        }}
         onOk={() => form.submit()}
-        confirmLoading={addStudent.isPending}
-        okText="Qo‘shish"
+        confirmLoading={addStudent.isPending || updateStudent.isPending}
+        okText="Saqlash"
       >
-        <Form form={form} layout="vertical" onFinish={(v) => addStudent.mutate(v)}>
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={(v) => {
+            if (editingStudent) {
+              const { email: _e, password, ...rest } = v;
+              updateStudent.mutate({
+                userId: editingStudent.userId || editingStudent.user?.id,
+                values: {
+                  ...rest,
+                  ...(password ? { password } : {}),
+                },
+              });
+            } else {
+              addStudent.mutate(v);
+            }
+          }}
+        >
           <Form.Item name="firstName" label="Ism" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
           <Form.Item name="lastName" label="Familiya" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email' }]}>
-            <Input />
+          <Form.Item
+            name="email"
+            label="Login (email)"
+            rules={[{ required: !editingStudent, type: 'email' }]}
+          >
+            <Input disabled={!!editingStudent} />
           </Form.Item>
           <Form.Item name="studentNumber" label="Talaba raqami">
             <Input />
@@ -308,8 +412,16 @@ export function GroupDetailPage() {
           <Form.Item name="phone" label="Telefon">
             <Input />
           </Form.Item>
-          <Form.Item name="password" label="Parol (ixtiyoriy)">
-            <Input.Password placeholder="Bo‘sh qoldirilsa avtomatik yaratiladi" />
+          <Form.Item
+            name="password"
+            label="Parol"
+            extra={
+              editingStudent
+                ? 'Bo‘sh qoldirilsa o‘zgarmaydi'
+                : 'Bo‘sh qoldirilsa avtomatik yaratiladi'
+            }
+          >
+            <Input.Password />
           </Form.Item>
         </Form>
       </Modal>
