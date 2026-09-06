@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3026',
+  baseURL: import.meta.env.VITE_API_URL || 'https://form-api.akaikumogo.uz',
 });
 
 api.interceptors.request.use((config) => {

@@ -48,7 +48,7 @@ export const responsesApi = {
       .post(`/public/forms/${publicId}/responses`, { answers })
       .then((r) => r.data),
   exportUrl: (formId: string, format: 'csv' | 'xlsx') =>
-    `${import.meta.env.VITE_API_URL || 'http://localhost:3026'}/forms/${formId}/responses/export?format=${format}`,
+    `${import.meta.env.VITE_API_URL || 'https://form-api.akaikumogo.uz'}/forms/${formId}/responses/export?format=${format}`,
 };
 
 export const dashboardApi = {
